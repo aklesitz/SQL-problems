@@ -77,3 +77,29 @@ JOIN professors p
 ON t.last_name = p.last_name
 ORDER BY 1
 
+-- remove the redundancies
+SELECT student_name, course_no, min(last_name)
+FROM (
+SELECT student_name, se.course_no, p.last_name
+FROM students s
+INNER JOIN student_enrollment se
+ON s.student_no = se.student_no
+INNER JOIN teach t
+ON se.course_no = t.course_no
+INNER JOIN professors p
+ON t.last_name = p.last_name
+) a
+GROUP BY student_name, course_no
+ORDER BY student_name, course_no;
+
+-- return employees whose salary is above average for their department
+SELECT last_name
+FROM employees e1
+WHERE salary > (SELECT avg(e2.salary) FROM employees e2 where e1.department = e2.department)
+
+
+-- return all students and any courses they may or may not be taking
+SELECT s.student_name, c.course_no
+FROM students s
+FULL JOIN student_enrollment c
+ON s.student_no = c.student_no
