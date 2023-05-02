@@ -66,3 +66,70 @@ ON acquisitions.company_permalink = companies.permalink
 WHERE founded_at_clean IS NOT NULL
 GROUP BY 1
 ORDER BY 5 DESC;
+
+-- Use left and right functions to clean date and time
+SELECT incidnt_num,
+    date,
+    LEFT(date, 10) AS cleaned_date,
+    RIGHT(date, LENGTH(date) - 11) AS cleaned_time
+FROM tutorial.sf_crime_incidents_2014_01;
+
+-- Use trim to remove () from location
+SELECT location,
+    TRIM(both '()' FROM location)
+FROM tutorial.sf_crime_incidents_2014_01;
+
+-- Use substring to find the day from date
+SELECT incidnt_num,
+      date,
+      SUBSTR(date, 4, 2) AS day
+FROM tutorial.sf_crime_incidents_2014_01;
+
+-- Seperate the location field into seperate fields for lat and long
+SELECT location,
+      TRIM(leading '(' FROM LEFT(location, POSITION(',' IN location) -1)) AS latitude,
+      TRIM(trailing ')' FROM RIGHT(location, LENGTH(location) - POSITION(',' IN location))) AS longtitude
+FROM tutorial.sf_crime_incidents_2014_01;
+
+-- Concat day and date 
+SELECT incidnt_num,
+      day_of_week,
+      LEFT(date, 10) AS cleaned_date,
+      CONCAT(day_of_week, ', ', LEFT(date, 10)) AS day_and_date
+FROM tutorial.sf_crime_incidents_2014_01;
+
+-- Concat lat and lon fields to form field eqivalent to location field
+SELECT CONCAT(lat, ', ', lon),
+      location
+FROM tutorial.sf_crime_incidents_2014_01;
+
+-- Or use || for concat
+SELECT '(' || lat || ', ' || lon || ')',
+      location
+FROM tutorial.sf_crime_incidents_2014_01;
+
+-- format date as YYYY-MM-DD
+SELECT date, 
+      SUBSTR(date, 7, 4) || '-' || LEFT(date, 2) || '-' || SUBSTR(date, 4, 2) as format_date 
+FROM tutorial.sf_crime_incidents_2014_01;
+
+-- Capitalize first letter of category field
+SELECT UPPER(LEFT(category, 1)) || LOWER(RIGHT(category, -1)) as cap_cat
+FROM tutorial.sf_crime_incidents_2014_01;
+
+-- Create accurate timestamp using date and time
+-- Include field exactly 1 week later
+SELECT incidnt_num,
+       (SUBSTR(date, 7, 4) || '-' || LEFT(date, 2) ||
+        '-' || SUBSTR(date, 4, 2) || ' ' || time || ':00')::timestamp AS timestamp,
+       (SUBSTR(date, 7, 4) || '-' || LEFT(date, 2) ||
+        '-' || SUBSTR(date, 4, 2) || ' ' || time || ':00')::timestamp
+        + INTERVAL '1 week' AS timestamp_plus_interval
+FROM tutorial.sf_crime_incidents_2014_01;
+
+-- Return number of incidents reported by week
+SELECT DATE_TRUNC('week', cleaned_date)::date as week,
+      COUNT(*) as incidents
+FROM tutorial.sf_crime_incidents_cleandate
+GROUP BY 1
+ORDER BY 1;
