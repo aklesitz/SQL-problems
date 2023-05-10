@@ -133,3 +133,35 @@ SELECT DATE_TRUNC('week', cleaned_date)::date as week,
 FROM tutorial.sf_crime_incidents_cleandate
 GROUP BY 1
 ORDER BY 1;
+
+-- Show how long ago each incident was reported
+SELECT incidnt_num,
+      NOW() AT TIME ZONE 'PST' - cleaned_date AS time_ago
+FROM tutorial.sf_crime_incidents_cleandate;
+
+-- Replace null values in description using coalesce
+SELECT incidnt_num,
+      descript,
+      COALESCE(descript, 'No Description')
+FROM tutorial.sf_crime_incidents_cleandate
+ORDER BY descript DESC;
+
+-- Return all unresolved incidents involving warrant arrests
+SELECT *
+FROM (
+    SELECT * 
+    FROM tutorial.sf_crime_incidents_2014_01
+    WHERE descript ilike 'warrant arrest') warrant
+WHERE warrant.resolution ilike 'none';
+
+-- Display average number of monthly incidents for each category
+SELECT sub.category,
+      AVG(sub.incidents) AS avg_incidents_per_month
+FROM (
+    SELECT EXTRACT('month' FROM cleaned_date) AS month,
+    category,
+    COUNT(1) AS incidents
+    FROM tutorial.sf_crime_incidents_cleandate
+    GROUP BY 1, 2
+    ) as sub
+GROUP BY 1;
