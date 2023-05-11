@@ -165,3 +165,68 @@ FROM (
     GROUP BY 1, 2
     ) as sub
 GROUP BY 1;
+
+-- display all rows from three categories with fewest incidents reported
+SELECT incidents.*
+FROM tutorial.sf_crime_incidents_2014_01 incidents
+JOIN (
+    SELECT category,
+          COUNT(incidnt_num)
+    FROM tutorial.sf_crime_incidents_2014_01
+    GROUP BY 1
+    ORDER BY 2
+    LIMIT 3) sub
+  ON incidents.category = sub.category;
+  
+-- Count the number of companies founded and acquired by quarter starting in Q1 2012
+-- create the aggregations in two sep queries, then join them
+SELECT COALESCE(companies.quarter, acquisitions.quarter) AS quarter,
+      companies.companies_founded,
+      acquisitions.companies_acquired
+FROM (
+    SELECT founded_quarter as quarter,
+          COUNT(permalink) AS companies_founded
+    FROM tutorial.crunchbase_companies
+    WHERE founded_year >= 2012
+    GROUP BY 1
+    ) companies
+
+LEFT JOIN (
+    SELECT acquired_quarter as quarter,
+          COUNT(company_permalink) AS companies_acquired
+    FROM tutorial.crunchbase_acquisitions
+    WHERE acquired_year >= 2012
+    GROUP BY 1
+    ) acquisitions
+    
+  ON companies.quarter = acquisitions.quarter
+ORDER BY 1;
+
+-- Rank investors from the combined dataset by the total number of investments made
+SELECT distinct investor_name,
+      COUNT(investor_permalink)
+FROM (
+      SELECT * 
+      FROM tutorial.crunchbase_investments_part1
+      UNION ALL
+      SELECT *
+      FROM tutorial.crunchbase_investments_part2
+      ) sub
+GROUP BY 1
+ORDER BY 2 DESC;
+
+-- Now only for companies that are still operating
+SELECT distinct investor_name,
+      COUNT(investor_permalink)
+FROM tutorial.crunchbase_companies companies
+JOIN (
+      SELECT * 
+      FROM tutorial.crunchbase_investments_part1
+      UNION ALL
+      SELECT *
+      FROM tutorial.crunchbase_investments_part2
+      ) investments
+ON investments.company_permalink = companies.permalink
+WHERE companies.status = 'operating'
+GROUP BY 1
+ORDER BY 2 DESC;
