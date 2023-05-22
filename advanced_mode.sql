@@ -230,3 +230,51 @@ ON investments.company_permalink = companies.permalink
 WHERE companies.status = 'operating'
 GROUP BY 1
 ORDER BY 2 DESC;
+
+-- Window Functions, return running total of ride duration from start terminal
+SELECT start_terminal,
+      duration_seconds,
+      SUM(duration_seconds) OVER
+      (PARTITION BY start_terminal ORDER BY start_time)
+      AS running_total
+FROM tutorial.dc_bikeshare_q1_2012
+WHERE start_time < '2012-01-08';
+
+-- Show duration of each ride as a percentage of the total time from each start terminal
+SELECT start_terminal,
+      duration_seconds,
+      (duration_seconds/SUM(duration_seconds) OVER (PARTITION BY start_terminal))*100 AS pct_of_total_time
+FROM tutorial.dc_bikeshare_q1_2012;
+
+-- Use all aggregates
+SELECT start_terminal,
+      duration_seconds,
+      SUM(duration_seconds) OVER
+        (PARTITION BY start_terminal) AS running_total,
+      COUNT(duration_seconds) OVER
+        (PARTITION BY start_terminal) AS running_count,
+      AVG(duration_seconds) OVER
+        (PARTITION BY start_terminal) AS running_avg
+FROM tutorial.dc_bikeshare_q1_2012
+WHERE start_time < '2012-01-08';
+
+SELECT start_terminal,
+      duration_seconds,
+      SUM(duration_seconds) OVER
+        (PARTITION BY start_terminal ORDER BY start_time) AS running_total,
+      COUNT(duration_seconds) OVER
+        (PARTITION BY start_terminal ORDER BY start_time) AS running_count,
+      AVG(duration_seconds) OVER
+        (PARTITION BY start_terminal ORDER BY start_time) AS running_avg
+FROM tutorial.dc_bikeshare_q1_2012
+WHERE start_time < '2012-01-08';
+
+-- Show running total of duration of bike rides grouped by end terminal and with
+-- ride duration sorted in descending order
+SELECT end_terminal,
+      duration_seconds,
+      SUM(duration_seconds) OVER 
+        (PARTITION BY end_terminal ORDER BY duration_seconds desc) as running_total
+FROM tutorial.dc_bikeshare_q1_2012
+WHERE start_time < '2012-01-08';
+
